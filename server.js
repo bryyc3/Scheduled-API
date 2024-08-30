@@ -1,18 +1,26 @@
 import express from 'express';
-import  getUsers from './database.js';
+import cors from 'cors';
+import  {getUsers, createUser} from './database.js';
+
 
 const app = express();
 
-app.get("/users", async (req,res) => {
+app.use(express.json());
+app.use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true,
+}));
+
+app.get("/users", async (req, res) => {
     const users = await getUsers();
     res.send(users);
 });
+app.post('/update-email', async (req, res) => {
+    const {email, password} = req.body;
+    const user = await createUser(email, password);
+    res.send(user);
+});
 
-app.use((err, req, res, next) =>{
-    console.error(err.stack);
-    res.status(500).send('Something broke!');
-})
-
-app.listen(8080, () => {
+app.listen(8000, () => {
     console.log('Server running on port 8080');
 });
