@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import  {getUsers, createUser} from './database.js';
+import  {getUsers, createUser, returningUser} from './database.js';
 
 
 const app = express();
@@ -15,10 +15,14 @@ app.get("/users", async (req, res) => {
     const users = await getUsers();
     res.send(users);
 });
-app.post('/update-email', async (req, res) => {
-    const {email, password} = req.body;
-    const user = await createUser(email, password);
-    res.send(user);
+app.post('/create-user', async (req, res) => {
+    const user = req.body;
+    const alreadyUser = await returningUser(user.email);
+    if (alreadyUser[0] == null){
+        const userCreated = await createUser(user);
+        res.json({'created' : true})
+    }
+    else{ res.json({'created' : false}) }
 });
 
 app.listen(8000, () => {

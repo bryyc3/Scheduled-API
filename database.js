@@ -9,14 +9,18 @@ const pool = mysql.createPool({
     database: process.env.MYSQL_DATABASE
 }).promise();
 
+export async function returningUser(userEmail){
+    const [foundUser] = await pool.query("select email from users where email = ?", userEmail);
+    return foundUser;
+}
 export  async function getUsers(){
-    const [rows] = await pool.query("select * from user_login_info");
-    return rows;
+   
 };
 
-export  async function createUser(email, password){
-    const [result] = await pool.query(
-        `INSERT INTO user_login_info(email, password)
-        VALUES (?,?)`, [email, password])
-    return result
+export  async function createUser(userInfo){
+     await pool.query(
+        `INSERT INTO users(email, password, account_type)
+        VALUES (?,?,?)`, [userInfo.email, userInfo.password, userInfo.accountType]);
+    const userCreated = returningUser(userInfo.email);
+    return userCreated;
 }
