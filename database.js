@@ -10,7 +10,7 @@ const pool = mysql.createPool({
 }).promise();
 
 export async function returningUser(userEmail){
-    const [foundUser] = await pool.query("select email from users where email = ?", userEmail);
+    const [foundUser] = await pool.query("select * from users where email = ?", userEmail);
     return foundUser;
 }
 export  async function getUsers(){
