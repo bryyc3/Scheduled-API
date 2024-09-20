@@ -13,7 +13,7 @@ export async function returningUser(userEmail){
     const [foundUser] = await pool.query("select * from users where email = ?", userEmail);
     return foundUser;
 }
-export  async function getUsers(){
+export async function getUsers(){
    
 };
 
@@ -23,4 +23,19 @@ export  async function createUser(userInfo){
         VALUES (?,?,?)`, [userInfo.email, userInfo.password, userInfo.accountType]);
     const userCreated = returningUser(userInfo.email);
     return userCreated;
+}
+
+export async function getAppointments(account, accountType){
+     if(accountType === 'scheduler'){
+            const [appointments] = await pool.query(
+            "SELECT * FROM appointments WHERE service_provider_email = ?",
+            account);
+            return appointments;
+        }
+    else if(accountType === 'booker'){
+        const [appointments] = await pool.query(
+            "SELECT * FROM appointments WHERE client_email = ?",
+            account);
+            return appointments;
+    }
 }
