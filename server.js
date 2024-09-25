@@ -4,7 +4,7 @@ import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
 import session from 'express-session';
 import mysqlStore from 'express-mysql-session';
-import  {getUsers, createUser, returningUser, getAppointments} from './database.js';
+import  {getUsers, createUser, returningUser, getAppointments, storeBusiness, addServices, getBusinessInfo} from './database.js';
 
 
 const app = express();
@@ -93,11 +93,27 @@ app.post('/login', async (req, res) => {
   //if user is already registered compare passwords, if not do not allow login
   //if passwords match, allow login
 
-app.get('/appointments', async (req,res) => {
+app.get('/appointments', async (req, res) => {
     const user = req.session.userID;
     const accountType = req.session.accountType;
     const appointments = await getAppointments(user, accountType);
     res.json(appointments);
+})
+
+app.post('/create-business', async (req, res) => {
+    const business = req.body;
+    const user = req.session.userID;
+    const createBusiness = await storeBusiness(user, business);
+})
+app.post('/add-services', async (req, res) => {
+    const services = req.body.services;
+    const user = req.session.userID;
+    const serviceAdded = await addServices(user, services);
+})
+app.get('/business-information', async (req, res) =>{
+    const user = req.session.userID;
+    const businessInfo = await getBusinessInfo(user);
+    res.json(businessInfo);
 })
 
 app.listen(8000, () => {

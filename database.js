@@ -28,7 +28,7 @@ export  async function createUser(userInfo){
 export async function getAppointments(account, accountType){
      if(accountType === 'scheduler'){
             const [appointments] = await pool.query(
-            "SELECT * FROM appointments WHERE service_provider_email = ?",
+            "SELECT * FROM appointments WHERE scheduler_email = ?",
             account);
             return appointments;
         }
@@ -38,4 +38,29 @@ export async function getAppointments(account, accountType){
             account);
             return appointments;
     }
+}
+
+export async function storeBusiness(email, business){
+    await pool.query(
+        `INSERT INTO businesses(owner, business_name, location, description)
+         VALUES (?,?,?,?)`, [email, business.businessName, business.address, business.businessDescription]
+    )
+}
+
+export function addServices(email, services){
+    services.map(async (service, index) => {
+        await pool.query(
+            `INSERT INTO services(provider, service, price, description)
+             VALUES (?,?,?,?)`, [email, service.name, service.price, service.description]
+        )
+    })
+    
+}
+
+export async function getBusinessInfo(email){
+    const [business] = await pool.query(
+        `SELECT * FROM businesses, services WHERE owner = ?`, [email]
+    )
+    return business;
+    
 }
