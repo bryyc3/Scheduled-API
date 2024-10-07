@@ -4,7 +4,7 @@ import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
 import session from 'express-session';
 import mysqlStore from 'express-mysql-session';
-import  {getUsers, createUser, returningUser, getAppointments, storeBusiness, addServices, getBusinessInfo} from './database.js';
+import  {createUser, returningUser, getAppointments, storeBusiness, addServices, getBusinessInfo, getServices, insertAvailability, getAvailability} from './database.js';
 
 
 const app = express();
@@ -98,23 +98,42 @@ app.get('/appointments', async (req, res) => {
     const accountType = req.session.accountType;
     const appointments = await getAppointments(user, accountType);
     res.json(appointments);
-})
+})//Get all appointments associated with user
 
 app.post('/create-business', async (req, res) => {
     const business = req.body;
     const user = req.session.userID;
     const createBusiness = await storeBusiness(user, business);
-})
+})//insert business info into database
+
 app.post('/add-services', async (req, res) => {
     const services = req.body.services;
     const user = req.session.userID;
     const serviceAdded = await addServices(user, services);
-})
+})//insert services associated with business into database
+
 app.get('/business-information', async (req, res) =>{
     const user = req.session.userID;
     const businessInfo = await getBusinessInfo(user);
     res.json(businessInfo);
-})
+})//get business information associated with user
+
+app.get('/business-services', async (req, res) =>{
+    const user = req.session.userID;
+    const services = await getServices(user);
+    res.json(services);
+})//get services associated with users business
+
+app.post('/insert-availability', async (req,res) =>{
+    const availability = req.body;
+    const user = req.session.userID;
+    const availabilitySet = await insertAvailability(user, availability);
+})//store scheduler availability in database
+app.get('/business-availability', async (req, res) =>{
+    const user = req.session.userID;
+    const availability = await getAvailability(user);
+    res.json(availability);
+})//get scheduler's availability
 
 app.listen(8000, () => {
     console.log('Server running on port 8080');

@@ -59,8 +59,32 @@ export function addServices(email, services){
 
 export async function getBusinessInfo(email){
     const [business] = await pool.query(
-        `SELECT * FROM businesses, services WHERE owner = ?`, [email]
+        `SELECT * FROM businesses WHERE owner = ?`, [email]
     )
     return business;
     
+}
+
+export async function getServices(email){
+    const [services] = await pool.query(
+        `SELECT * FROM services WHERE provider = ?`, [email]
+    )
+    return services;
+}
+
+export async function insertAvailability(email, availability){
+    availability.map(async (day, index) => {
+        console.log(day);
+        await pool.query(
+            `INSERT INTO availability(owner, day, start_time, end_time, unavailable)
+             VALUES (?,?,?,?,?)`,[email, day.name, day.start_time, day.end_time, day.unavailable]
+        )
+    })
+}
+
+export async function getAvailability(email){
+    const [availability] = await pool.query(
+        `SELECT * FROM availability WHERE owner = ?`, [email]
+    )
+    return availability;
 }
