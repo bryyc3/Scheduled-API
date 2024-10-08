@@ -4,7 +4,7 @@ import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
 import session from 'express-session';
 import mysqlStore from 'express-mysql-session';
-import  {createUser, returningUser, getAppointments, storeBusiness, addServices, getBusinessInfo, getServices, insertAvailability, getAvailability} from './database.js';
+import  {createUser, returningUser, getAppointments, storeBusiness, addServices, getBusinessInfo, getServices, insertAvailability, getAvailability, getBusinesses} from './database.js';
 
 
 const app = express();
@@ -112,12 +112,24 @@ app.post('/add-services', async (req, res) => {
     const serviceAdded = await addServices(user, services);
 })//insert services associated with business into database
 
+
+app.post('/business-information', async (req, res) =>{
+    const user = req.body.userSearch;
+    const businessInfo = await getBusinessInfo(user);
+    res.json(businessInfo);
+})//search for a specific businesses information
+
 app.get('/business-information', async (req, res) =>{
     const user = req.session.userID;
     const businessInfo = await getBusinessInfo(user);
     res.json(businessInfo);
 })//get business information associated with user
 
+app.post('/business-services', async (req, res) =>{
+    const user = req.body.userSearch;
+    const services = await getServices(user);
+    res.json(services);
+})//search services associated with business
 app.get('/business-services', async (req, res) =>{
     const user = req.session.userID;
     const services = await getServices(user);
@@ -134,6 +146,12 @@ app.get('/business-availability', async (req, res) =>{
     const availability = await getAvailability(user);
     res.json(availability);
 })//get scheduler's availability
+
+
+app.get('/get-businesses', async (req, res) =>{
+    const businesses = await getBusinesses();
+    res.json(businesses);
+})
 
 app.listen(8000, () => {
     console.log('Server running on port 8080');

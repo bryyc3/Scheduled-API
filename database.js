@@ -34,7 +34,7 @@ export async function getAppointments(account, accountType){
         }
     else if(accountType === 'booker'){
         const [appointments] = await pool.query(
-            "SELECT * FROM appointments WHERE client_email = ?",
+            "SELECT * FROM appointments WHERE booker_email = ?",
             account);
             return appointments;
     }
@@ -62,7 +62,6 @@ export async function getBusinessInfo(email){
         `SELECT * FROM businesses WHERE owner = ?`, [email]
     )
     return business;
-    
 }
 
 export async function getServices(email){
@@ -74,7 +73,6 @@ export async function getServices(email){
 
 export async function insertAvailability(email, availability){
     availability.map(async (day, index) => {
-        console.log(day);
         await pool.query(
             `INSERT INTO availability(owner, day, start_time, end_time, unavailable)
              VALUES (?,?,?,?,?)`,[email, day.name, day.start_time, day.end_time, day.unavailable]
@@ -87,4 +85,11 @@ export async function getAvailability(email){
         `SELECT * FROM availability WHERE owner = ?`, [email]
     )
     return availability;
+}
+
+export async function getBusinesses(){
+    const [businesses] = await pool.query(
+        `SELECT * FROM businesses`
+    )
+    return businesses;
 }
