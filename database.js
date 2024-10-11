@@ -50,8 +50,8 @@ export async function storeBusiness(email, business){
 export function addServices(email, services){
     services.map(async (service, index) => {
         await pool.query(
-            `INSERT INTO services(provider, service, price, description)
-             VALUES (?,?,?,?)`, [email, service.name, service.price, service.description]
+            `INSERT INTO services(provider, service, price, description, time)
+             VALUES (?,?,?,?,?)`, [email, service.name, service.price, service.description, service.time]
         )
     })
     
@@ -78,6 +78,14 @@ export async function insertAvailability(email, availability){
              VALUES (?,?,?,?,?)`,[email, day.name, day.start_time, day.end_time, day.unavailable]
         )
     })
+}
+
+export async function insertSlotDivision(slotDivision, email){
+    await pool.query(
+        `UPDATE businesses
+            SET divide_slots = ?
+            WHERE owner = ?`,[slotDivision, email]
+    )
 }
 
 export async function getAvailability(email){

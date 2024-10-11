@@ -4,7 +4,7 @@ import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
 import session from 'express-session';
 import mysqlStore from 'express-mysql-session';
-import  {createUser, returningUser, getAppointments, storeBusiness, addServices, getBusinessInfo, getServices, insertAvailability, getAvailability, getBusinesses} from './database.js';
+import  {createUser, returningUser, getAppointments, storeBusiness, addServices, getBusinessInfo, getServices, insertAvailability, insertSlotDivision, getAvailability, getBusinesses} from './database.js';
 
 
 const app = express();
@@ -141,6 +141,11 @@ app.post('/insert-availability', async (req,res) =>{
     const user = req.session.userID;
     const availabilitySet = await insertAvailability(user, availability);
 })//store scheduler availability in database
+app.put('/insert-slot-division', async (req,res) =>{
+    const slotDiv = req.body.slotDivision;
+    const user = req.session.userID;
+    const slotDivSet = await insertSlotDivision(slotDiv, user);
+})
 app.get('/business-availability', async (req, res) =>{
     const user = req.session.userID;
     const availability = await getAvailability(user);
