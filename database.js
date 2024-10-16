@@ -9,35 +9,39 @@ const pool = mysql.createPool({
     database: process.env.MYSQL_DATABASE
 }).promise();
 
-export async function returningUser(userEmail){
-    const [foundUser] = await pool.query("select * from users where email = ?", userEmail);
+export async function findUser(userEmail){
+    const [foundUser] = await pool.query(`select * from users where email = ?`, userEmail);
     return foundUser;
 }
-export async function getUsers(){
-   
-};
 
 export  async function createUser(userInfo){
      await pool.query(
-        `INSERT INTO users(email, password, account_type)
-        VALUES (?,?,?)`, [userInfo.email, userInfo.password, userInfo.accountType]);
-    const userCreated = returningUser(userInfo.email);
+        `INSERT INTO users(email, password, account_type, first_name)
+        VALUES (?,?,?,?)`, [userInfo.email, userInfo.password, userInfo.accountType, userInfo.firstName]);
+    const userCreated = findUser(userInfo.email);
     return userCreated;
 }
 
 export async function getAppointments(account, accountType){
      if(accountType === 'scheduler'){
             const [appointments] = await pool.query(
-            "SELECT * FROM appointments WHERE scheduler_email = ?",
+            `SELECT * FROM appointments WHERE scheduler_email = ?`,
             account);
             return appointments;
         }
     else if(accountType === 'booker'){
         const [appointments] = await pool.query(
-            "SELECT * FROM appointments WHERE booker_email = ?",
+            `SELECT * FROM appointments WHERE booker_email = ?`,
             account);
             return appointments;
     }
+}
+
+export async function getDaySpecificAppointments(email, date){
+    const [appointments] = await pool.query(
+        `SELECT * FROM appointments WHERE scheduler_email = ? AND date = ?`,
+        [email, date]);
+        return appointments;
 }
 
 export async function storeBusiness(email, business){
@@ -74,8 +78,8 @@ export async function getServices(email){
 export async function insertAvailability(email, availability){
     availability.map(async (day, index) => {
         await pool.query(
-            `INSERT INTO availability(owner, day, start_time, end_time, unavailable)
-             VALUES (?,?,?,?,?)`,[email, day.name, day.start_time, day.end_time, day.unavailable]
+            `INSERT INTO availability(owner, day, start_time, end_time, unavailable, day_id)
+             VALUES (?,?,?,?,?,?)`,[email, day.name, day.start_time, day.end_time, day.unavailable, day.id]
         )
     })
 }
@@ -100,4 +104,13 @@ export async function getBusinesses(){
         `SELECT * FROM businesses`
     )
     return businesses;
+}
+
+export async function scheduleAppt(scheduler, booker, service, date, startTime, endTime, displayTime, schedulerName, bookerName){
+    await pool.query(
+        `INSERT INTO appointments(scheduler_email, booker_email, service, date,
+                                  start_time, end_time, display_time, scheduler_name, booker_name)
+         VALUES (?,?,?,?,?,?,?,?,?)`,[scheduler, booker, service, date,  
+                                      startTime, endTime, displayTime, schedulerName, bookerName]
+    );
 }

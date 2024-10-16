@@ -4,7 +4,10 @@ import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
 import session from 'express-session';
 import mysqlStore from 'express-mysql-session';
-import  {createUser, returningUser, getAppointments, storeBusiness, addServices, getBusinessInfo, getServices, insertAvailability, insertSlotDivision, getAvailability, getBusinesses} from './database.js';
+import  {createUser, findUser, getAppointments, storeBusiness, 
+         addServices, getBusinessInfo, getServices, insertAvailability, 
+         insertSlotDivision, getAvailability, getBusinesses, 
+         getDaySpecificAppointments, scheduleAppt} from './database.js';
 
 
 const app = express();
@@ -25,8 +28,6 @@ app.use(session({
 }))
 
 app.get('/loginStatus', (req,res) => {
-    //console.log(req.session.loggedIn)
-    //console.log(req.session.accountType)
     if(req.session.loggedIn){
         res.json({
             logged_in: req.session.loggedIn,
@@ -42,7 +43,7 @@ app.get('/loginStatus', (req,res) => {
 app.post('/create-user', async (req, res) => {
     const user = req.body;
     user.password = await bcrypt.hash(user.password, 13);
-    const alreadyUser = await returningUser(user.email);
+    const alreadyUser = await findUser(user.email);
     if (alreadyUser[0] == null){
         const userCreated = await createUser(user);
         req.session.loggedIn = true;
@@ -65,7 +66,7 @@ app.post('/create-user', async (req, res) => {
 app.post('/login', async (req, res) => {
     //console.log(req.body);
     const user = req.body;
-    const registeredUser = await returningUser(user.email);
+    const registeredUser = await findUser(user.email);
     if(registeredUser[0] == null){
         res.json({'login' : false});
         return;
@@ -93,6 +94,12 @@ app.post('/login', async (req, res) => {
   //if user is already registered compare passwords, if not do not allow login
   //if passwords match, allow login
 
+app.post('/day-specific-appointments', async (req, res) => {
+    const scheduler = req.body.scheduler;
+    const date = req.body.date;
+    const dayAppointments = await getDaySpecificAppointments(scheduler, date);
+    res.json(dayAppointments);
+})//Get all appointments for a specific day 
 app.get('/appointments', async (req, res) => {
     const user = req.session.userID;
     const accountType = req.session.accountType;
@@ -103,13 +110,13 @@ app.get('/appointments', async (req, res) => {
 app.post('/create-business', async (req, res) => {
     const business = req.body;
     const user = req.session.userID;
-    const createBusiness = await storeBusiness(user, business);
+    await storeBusiness(user, business);
 })//insert business info into database
 
 app.post('/add-services', async (req, res) => {
     const services = req.body.services;
     const user = req.session.userID;
-    const serviceAdded = await addServices(user, services);
+    await addServices(user, services);
 })//insert services associated with business into database
 
 
@@ -139,13 +146,19 @@ app.get('/business-services', async (req, res) =>{
 app.post('/insert-availability', async (req,res) =>{
     const availability = req.body;
     const user = req.session.userID;
-    const availabilitySet = await insertAvailability(user, availability);
+    await insertAvailability(user, availability);
 })//store scheduler availability in database
 app.put('/insert-slot-division', async (req,res) =>{
     const slotDiv = req.body.slotDivision;
     const user = req.session.userID;
-    const slotDivSet = await insertSlotDivision(slotDiv, user);
-})
+    await insertSlotDivision(slotDiv, user);
+})//update a user's business with how they want their time slots divided
+
+app.post('/business-availability', async (req, res) =>{
+    const provider = req.body.provider;
+    const availability = await getAvailability(provider);
+    res.json(availability);
+})//get availability schedule for a particular business
 app.get('/business-availability', async (req, res) =>{
     const user = req.session.userID;
     const availability = await getAvailability(user);
@@ -156,7 +169,29 @@ app.get('/business-availability', async (req, res) =>{
 app.get('/get-businesses', async (req, res) =>{
     const businesses = await getBusinesses();
     res.json(businesses);
-})
+})//get all business stored in db
+
+app.post('/schedule-appointment', async (req, res) =>{
+    const user = await findUser(req.session.userID);
+    const apptInfo = req.body;
+    const provider = await findUser(apptInfo.service_provider);
+    console.log(provider, user)
+    const service = apptInfo.service_name;
+    const date = apptInfo.date;
+    const startTime = apptInfo.start_time;
+    const endTime = apptInfo.end_time;
+    const displayTime = apptInfo.time_display;
+    await scheduleAppt(provider[0].email, user[0].email, service, date, startTime, endTime, displayTime, provider[0].first_name, user[0].first_name);
+
+    const scheduledAppointment = await getDaySpecificAppointments(provider[0].email, date);
+    if(scheduledAppointment[0] == null){
+        res.json({success: false});
+    }
+    else{
+        res.json({success: true});
+    }
+    
+})//store appointment info
 
 app.listen(8000, () => {
     console.log('Server running on port 8080');
